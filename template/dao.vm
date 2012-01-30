@@ -1,0 +1,350 @@
+package $!{workBookEntity.getPackageName()}.dao;
+
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+
+import $!{workBookEntity.getPackageName()}.entity.$!{workBookEntity.getClassName()}Entity;
+
+public class $!{workBookEntity.getClassName()}Dao {
+
+	private Connection conn;
+
+	/**
+	* コンストラクタ
+	* @throws ClassNotFoundException JDBCドライバのクラスが見つからないときスローされます。
+	* @throws SQLException コネクション取得に失敗したとき、スローされます。
+	*/
+	public $!{workBookEntity.getClassName()}Dao() throws ClassNotFoundException, SQLException{
+
+		// ドライバクラスをロード
+		Class.forName("$!{jdbcClassName}");
+		// データベースへ接続
+		this.conn = DriverManager.getConnection("$!{dbAccessUri}", "$!{dbUser}", "$!{dbPassword}");
+		// オートコミットのオフ
+		this.conn.setAutoCommit(false);
+
+	}
+
+	/**
+	 * テーブル $!{workBookEntity.getTableName()} のレコードを全件取得します。
+	 * @return $!{workBookEntity.getClassName()}Entity のリストを返却します。
+	 * @throws SQLException 
+	 */
+	public List<$!{workBookEntity.getClassName()}Entity> selectAll() throws SQLException{
+
+		List<$!{workBookEntity.getClassName()}Entity> list = new ArrayList<$!{workBookEntity.getClassName()}Entity>();
+
+		String query = "SELECT "
+#set( $count = 1)
+#foreach(${rowEntity} in ${workBookEntity.getList()})
+#if($count == $!{workBookEntity.getList().size()})
+			+ "A.$!{rowEntity.columnButurimei} "
+#else
+			+ "A.$!{rowEntity.columnButurimei}, "
+#set( $count = $count + 1)
+#end
+#end
+			+ "FROM $!{workBookEntity.getTableName()} A ";
+
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try{
+			ps = conn.prepareStatement(query);
+			rs = ps.executeQuery();
+			while(rs.next()){
+				$!{workBookEntity.getClassName()}Entity entity = new $!{workBookEntity.getClassName()}Entity();
+#foreach(${rowEntity} in ${workBookEntity.getList()})
+#if($!{rowEntity.getFieldClassForStatement()} == "Date")
+				entity.set$!{rowEntity.methodNameForJavaNaming}(new Date(rs.getTimestamp("insert_date").getTime()));
+#else
+				entity.set$!{rowEntity.methodNameForJavaNaming}(rs.get$!{rowEntity.getFieldClassForStatement()}("$!{rowEntity.columnButurimei}"));
+#end
+#end
+				list.add(entity);
+			}
+		} finally {
+			rs.close();
+			ps.close();
+		}
+
+		return list;
+	}
+
+	/**
+	 * テーブル $!{workBookEntity.getTableName()} のレコードを主キーで検索し、データを取得します。
+	 * @return $!{workBookEntity.getClassName()}Entity のリストを返却します。
+	 * @throws SQLException 
+	 */
+	public List<$!{workBookEntity.getClassName()}Entity> selectId($!{workBookEntity.getClassName()}Entity entity) throws SQLException{
+
+		List<$!{workBookEntity.getClassName()}Entity> list = new ArrayList<$!{workBookEntity.getClassName()}Entity>();
+
+		String query = "SELECT "
+#set( $count = 1)
+#foreach(${rowEntity} in ${workBookEntity.getList()})
+#if($count == $!{workBookEntity.getList().size()})
+			+ "A.$!{rowEntity.columnButurimei} "
+#else
+			+ "A.$!{rowEntity.columnButurimei}, "
+#set( $count = $count + 1)
+#end
+#end
+			+ "FROM $!{workBookEntity.getTableName()} A "
+#set( $count = 1)
+#foreach(${rowEntity} in ${workBookEntity.getList()})
+#if(${rowEntity.isIdFlg()})
+#if($count == 1)
+			+ "WHERE A.$!{rowEntity.columnButurimei} = ? "
+#set( $count = $count + 1)
+#else
+			+ "AND A.$!{rowEntity.columnButurimei} = ? "
+#set( $count = $count + 1)
+#end
+#end
+#end
+			;
+
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try{
+			ps = conn.prepareStatement(query);
+#set( $count = 1)
+#foreach(${rowEntity} in ${workBookEntity.getList()})
+#if(${rowEntity.isIdFlg()})
+#if($!{rowEntity.getFieldClassForStatement()} == "Date")
+			ps.setTimestamp($count, new Timestamp(entity.get$!{rowEntity.methodNameForJavaNaming}().getTime()));
+#else
+			ps.set$!{rowEntity.getFieldClassForStatement()}($count, entity.get$!{rowEntity.methodNameForJavaNaming}());
+#end
+#set( $count = $count + 1)
+#end
+#end
+			rs = ps.executeQuery();
+			while(rs.next()){
+				$!{workBookEntity.getClassName()}Entity newentity = new $!{workBookEntity.getClassName()}Entity();
+#set( $count = 1)
+#foreach(${rowEntity} in ${workBookEntity.getList()})
+#if($!{rowEntity.getFieldClassForStatement()} == "Date")
+				newentity.set$!{rowEntity.methodNameForJavaNaming}(new Date(rs.getTimestamp("$!{rowEntity.columnButurimei}").getTime()));
+#else
+				newentity.set$!{rowEntity.methodNameForJavaNaming}(rs.get$!{rowEntity.getFieldClassForStatement()}("$!{rowEntity.columnButurimei}"));
+#end
+#end
+				list.add(newentity);
+			}
+		} finally {
+			rs.close();
+			ps.close();
+		}
+
+		return list;
+	}
+
+	/**
+	 * テーブル $!{workBookEntity.getTableName()} のレコードを挿入します。
+	 * @return 挿入件数を返却します。
+	 * @throws SQLException 
+	 */
+	public int insert($!{workBookEntity.getClassName()}Entity entity) throws SQLException{
+
+		int ret = 0 ;
+
+		String query = "INSERT INTO $!{workBookEntity.getTableName()}( "
+#set( $count = 1)
+#foreach(${rowEntity} in ${workBookEntity.getList()})
+#if($count == $!{workBookEntity.getList().size()})
+			+ "$!{rowEntity.columnButurimei} "
+#else
+			+ "$!{rowEntity.columnButurimei}, "
+#set( $count = $count + 1)
+#end
+#end
+			+ ") VALUES ( "
+#set( $count = 1)
+#foreach(${rowEntity} in ${workBookEntity.getList()})
+#if($count == $!{workBookEntity.getList().size()})
+			+ "? "
+#else
+			+ "?, "
+#set( $count = $count + 1)
+#end
+#end
+			+ ")";
+
+		PreparedStatement ps = null;
+		try{
+			ps = conn.prepareStatement(query);
+#set( $count = 1)
+#foreach(${rowEntity} in ${workBookEntity.getList()})
+#if($!{rowEntity.getFieldClassForStatement()} == "Date")
+			ps.setTimestamp($count, new Timestamp(entity.get$!{rowEntity.methodNameForJavaNaming}().getTime()));
+#else
+			ps.set$!{rowEntity.getFieldClassForStatement()}($count, entity.get$!{rowEntity.methodNameForJavaNaming}());
+#end
+#set( $count = $count + 1)
+#end
+			ret = ps.executeUpdate();
+		} finally {
+			ps.close();
+			conn.commit();
+		}
+
+		return ret;
+	}
+
+	/**
+	 * テーブル $!{workBookEntity.getTableName()} のレコードを更新します。
+	 * @return 更新件数を返却します。
+	 * @throws SQLException 
+	 */
+	public int updateId($!{workBookEntity.getClassName()}Entity entity) throws SQLException{
+
+		int ret = 0 ;
+
+		String query = "UPDATE $!{workBookEntity.getTableName()} A SET "
+#set( $count = 1)
+#foreach(${rowEntity} in ${workBookEntity.getList()})
+#if(!${rowEntity.isIdFlg()})
+#if($count == $!{workBookEntity.getList().size()})
+			+ "A.$!{rowEntity.columnButurimei} = ? "
+#else
+			+ "A.$!{rowEntity.columnButurimei} = ?, "
+#end
+#end
+#set( $count = $count + 1)
+#end
+##
+#set( $count = 1)
+#foreach(${rowEntity} in ${workBookEntity.getList()})
+#if(${rowEntity.isIdFlg()})
+#if($count == 1)
+			+ "WHERE A.$!{rowEntity.columnButurimei} = ? "
+#set( $count = $count + 1)
+#else
+			+ "AND A.$!{rowEntity.columnButurimei} = ? "
+#set( $count = $count + 1)
+#end
+#end
+#end
+		;
+
+		PreparedStatement ps = null;
+		try{
+			ps = conn.prepareStatement(query);
+#set( $count = 1)
+#foreach(${rowEntity} in ${workBookEntity.getList()})
+#if(!${rowEntity.isIdFlg()})
+#if($!{rowEntity.getFieldClassForStatement()} == "Date")
+			ps.setTimestamp($count, new Timestamp(entity.get$!{rowEntity.methodNameForJavaNaming}().getTime()));
+#else
+			ps.set$!{rowEntity.getFieldClassForStatement()}($count, entity.get$!{rowEntity.methodNameForJavaNaming}());
+#end
+#set( $count = $count + 1)
+#end
+#end
+##
+#foreach(${rowEntity} in ${workBookEntity.getList()})
+#if(${rowEntity.isIdFlg()})
+			ps.set$!{rowEntity.getFieldClassForStatement()}($count, entity.get$!{rowEntity.methodNameForJavaNaming}());
+#set( $count = $count + 1)
+#end
+#end
+			ret = ps.executeUpdate();
+		} finally {
+			ps.close();
+			conn.commit();
+		}
+
+		return ret;
+	}
+
+	/**
+	 * テーブル $!{workBookEntity.getTableName()} のレコードをすべて削除します。
+	 * @return 削除件数を返却します。
+	 * @throws SQLException 
+	 */
+	public int deleteAll() throws SQLException{
+
+		int ret = 0 ;
+
+		String query = "DELETE FROM $!{workBookEntity.getTableName()} ";
+
+		PreparedStatement ps = null;
+		try{
+			ps = conn.prepareStatement(query);
+			ret = ps.executeUpdate();
+		} finally {
+			ps.close();
+			conn.commit();
+		}
+
+		return ret;
+	}
+
+	/**
+	 * テーブル $!{workBookEntity.getTableName()} のレコードを主キーで検索し削除します。
+	 * @return 削除件数を返却します。
+	 * @throws SQLException 
+	 */
+	public int deleteId($!{workBookEntity.getClassName()}Entity entity) throws SQLException{
+
+		int ret = 0 ;
+
+		String query = "DELETE FROM $!{workBookEntity.getTableName()} A "
+#set( $count = 1)
+#foreach(${rowEntity} in ${workBookEntity.getList()})
+#if(${rowEntity.isIdFlg()})
+#if($count == 1)
+			+ "WHERE A.$!{rowEntity.columnButurimei} = ? "
+#set( $count = $count + 1)
+#else
+			+ "AND A.$!{rowEntity.columnButurimei} = ? "
+#set( $count = $count + 1)
+#end
+#end
+#end
+			;
+
+		PreparedStatement ps = null;
+		try{
+			ps = conn.prepareStatement(query);
+#set( $count = 1)
+#foreach(${rowEntity} in ${workBookEntity.getList()})
+#if(${rowEntity.isIdFlg()})
+#if($!{rowEntity.getFieldClassForStatement()} == "Date")
+			ps.setTimestamp($count, new Timestamp(entity.get$!{rowEntity.methodNameForJavaNaming}().getTime()));
+#else
+			ps.set$!{rowEntity.getFieldClassForStatement()}($count, entity.get$!{rowEntity.methodNameForJavaNaming}());
+#end
+#set( $count = $count + 1)
+#end
+#end
+			ret = ps.executeUpdate();
+		} finally {
+			ps.close();
+			conn.commit();
+		}
+
+		return ret;
+	}
+
+	/**
+	 * コネクションをクローズします。
+	 */
+	public void close(){
+		try {
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			System.out.println("コネクションクローズに失敗しました。");
+		}
+	}
+
+}

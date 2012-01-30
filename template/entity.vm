@@ -1,0 +1,27 @@
+package $!{workBookEntity.getPackageName()}.entity;
+
+import java.util.Date;
+
+public class $!{workBookEntity.getClassName()}Entity {
+
+#foreach(${rowEntity} in ${workBookEntity.getList()})
+
+	/** $!{rowEntity.columnName} */
+	private $!{rowEntity.entityFiledClassType} $!{rowEntity.propertyNameForJavaNaming};
+
+	/** 
+	 * @return $!{rowEntity.fieldNameForJavaNaming}($!{rowEntity.columnName})を返却します。
+	 */ 
+	public $!{rowEntity.entityFiledClassType} get$!{rowEntity.methodNameForJavaNaming}(){
+		 return this.$!{rowEntity.propertyNameForJavaNaming};
+	}
+
+	/** 
+	 * @param $!{rowEntity.fieldNameForJavaNaming}($!{rowEntity.columnName})をこのエンティティの$!{rowEntity.fieldNameForJavaNaming}($!{rowEntity.columnName})に設定します。
+	 */ 
+	public void set$!{rowEntity.methodNameForJavaNaming}($!{rowEntity.entityFiledClassType} $!{rowEntity.propertyNameForJavaNaming}){
+		this.$!{rowEntity.propertyNameForJavaNaming} = $!{rowEntity.propertyNameForJavaNaming};
+	}
+
+#end
+}
