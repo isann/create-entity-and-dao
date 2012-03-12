@@ -5,10 +5,11 @@ import java.util.Date;
 public class $!{workBookEntity.getClassName()}Entity {
 
 #foreach(${rowEntity} in ${workBookEntity.getList()})
-
 	/** $!{rowEntity.columnName} */
 	private $!{rowEntity.entityFiledClassType} $!{rowEntity.propertyNameForJavaNaming};
 
+#end
+#foreach(${rowEntity} in ${workBookEntity.getList()})
 	/** 
 	 * @return $!{rowEntity.fieldNameForJavaNaming}($!{rowEntity.columnName})を返却します。
 	 */ 
